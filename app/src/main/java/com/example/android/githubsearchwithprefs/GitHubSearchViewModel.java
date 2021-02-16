@@ -24,6 +24,11 @@ public class GitHubSearchViewModel extends ViewModel {
         this.repository.loadSearchResults(query);
     }
 
+    public void loadSearchResults(String query, String sort, String language, String user,
+                                  boolean inName, boolean inDescription, boolean inReadme) {
+        this.repository.loadSearchResults(query, sort, language, user, inName, inDescription, inReadme);
+    }
+
     public LiveData<List<GitHubRepo>> getSearchResults() {
         return this.searchResults;
     }
