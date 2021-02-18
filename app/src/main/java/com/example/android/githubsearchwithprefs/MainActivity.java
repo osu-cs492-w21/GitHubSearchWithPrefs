@@ -4,12 +4,15 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -23,7 +26,8 @@ import com.example.android.githubsearchwithprefs.data.LoadingStatus;
 
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements GitHubSearchAdapter.OnSearchResultClickListener {
+public class MainActivity extends AppCompatActivity
+        implements GitHubSearchAdapter.OnSearchResultClickListener, SharedPreferences.OnSharedPreferenceChangeListener {
     private static final String TAG = MainActivity.class.getSimpleName();
 
     private RecyclerView searchResultsRV;
@@ -33,6 +37,8 @@ public class MainActivity extends AppCompatActivity implements GitHubSearchAdapt
 
     private GitHubSearchAdapter githubSearchAdapter;
     private GitHubSearchViewModel githubSearchViewModel;
+
+    private SharedPreferences sharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +55,9 @@ public class MainActivity extends AppCompatActivity implements GitHubSearchAdapt
 
         this.githubSearchAdapter = new GitHubSearchAdapter(this);
         this.searchResultsRV.setAdapter(this.githubSearchAdapter);
+
+        this.sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        this.sharedPreferences.registerOnSharedPreferenceChangeListener(this);
 
         this.githubSearchViewModel = new ViewModelProvider(this).get(GitHubSearchViewModel.class);
 
@@ -88,10 +97,59 @@ public class MainActivity extends AppCompatActivity implements GitHubSearchAdapt
             public void onClick(View v) {
                 String searchQuery = searchBoxET.getText().toString();
                 if (!TextUtils.isEmpty(searchQuery)) {
-                    githubSearchViewModel.loadSearchResults(searchQuery);
+                    String sort = sharedPreferences.getString(
+                            getString(R.string.pref_sort_key),
+                            getString(R.string.pref_sort_default)
+                    );
+                    String language = sharedPreferences.getString(
+                            getString(R.string.pref_language_key),
+                            getString(R.string.pref_language_default)
+                    );
+                    String user = sharedPreferences.getString(
+                            getString(R.string.pref_user_key),
+                            ""
+                    );
+                    boolean inName = sharedPreferences.getBoolean(
+                            getString(R.string.pref_in_name_key),
+                            true
+                    );
+                    boolean inDescription = sharedPreferences.getBoolean(
+                            getString(R.string.pref_in_description_key),
+                            true
+                    );
+                    boolean inReadme = sharedPreferences.getBoolean(
+                            getString(R.string.pref_in_readme_key),
+                            false
+                    );
+                    githubSearchViewModel.loadSearchResults(
+                            searchQuery,
+                            sort,
+                            language,
+                            user,
+                            inName,
+                            inDescription,
+                            inReadme
+                    );
                 }
             }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        this.sharedPreferences.unregisterOnSharedPreferenceChangeListener(this);
+        super.onDestroy();
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if (TextUtils.equals(key, getString(R.string.pref_in_name_key))
+            || TextUtils.equals(key, getString(R.string.pref_in_description_key))
+            || TextUtils.equals(key, getString(R.string.pref_in_readme_key))) {
+            Log.d(TAG, "shared preference changed, key: " + key + ", value: " + sharedPreferences.getBoolean(key, false));
+        } else {
+            Log.d(TAG, "shared preference changed, key: " + key + ", value: " + sharedPreferences.getString(key, ""));
+        }
     }
 
     @Override

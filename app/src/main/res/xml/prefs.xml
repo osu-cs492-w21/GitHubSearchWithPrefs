@@ -21,6 +21,11 @@
         android:defaultValue=""
         app:useSimpleSummaryProvider="true" />
 
+    <EditTextPreference
+        android:title="@string/pref_user_title"
+        android:key="@string/pref_user_key"
+        app:useSimpleSummaryProvider="true" />
+
     <PreferenceCategory android:title="@string/pref_in_title">
         <CheckBoxPreference
             android:title="@string/pref_in_name_title"
